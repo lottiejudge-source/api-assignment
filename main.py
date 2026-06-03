@@ -1,8 +1,19 @@
+import os
+import psycopg
+from dotenv import load_dotenv
 from fastapi import FastAPI,Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-connection=None 
+load_dotenv()
+
+connection = psycopg.connect(
+    host=os.getenv("DB_HOST"),
+    dbname=os.getenv("DB_NAME"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    port=os.getenv("DB_PORT", "5432")
+)
 
 app = FastAPI()
 templates=Jinja2Templates(directory="templates")
@@ -19,6 +30,9 @@ def read_items(request: Request, name: str = "Taybah"):
         context={"name": name}
     )
 
-@app.get("/dog", response_class=HTMLResponse)
-def get_dogs():
-    external_Url = "https://dog.ceo/api/breeds/image/random"
+@app.get("/coins")
+def get_coins():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * from coins.coins")
+        coins = cursor.fetchall()
+        return coins
