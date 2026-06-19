@@ -1,3 +1,5 @@
 Running this app: 
-- fastapi dev
+python -m fastapi dev main.py
 
+Testing: 
+python -m pytest 
