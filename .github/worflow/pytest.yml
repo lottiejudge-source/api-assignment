@@ -1,0 +1,27 @@
+name: Run tests and check coverage 
+
+on:
+  push: 
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+
+jobs: 
+  test:
+    runs-on: ubuntu-latest
+
+    steps: 
+      - name: Check out repo code 
+        uses: actions/checkout@v4
+      
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Run tests with pytest and ensure 80% coverage 
+        run: | 
+          pytest --cov=. --cov-fail-under=80 
+
+      
