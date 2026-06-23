@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from main import app
 from database import db, Coins, Duties, JoinCoinsAndDuties
+from seed import seed_data
 client=TestClient(app)
 
 db.connect(reuse_if_open=True)
@@ -63,3 +64,12 @@ def test_for_updating_coin():
 
     assert response.status_code == 200
 
+def test_seeds_data_successfully():
+    try:
+        seed_data()
+        seed_successful = True
+    except Exception as error:
+        seed_successful = False 
+        print(f"seed failed wither error: {error}")
+
+    assert seed_successful == True
