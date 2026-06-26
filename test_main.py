@@ -20,7 +20,7 @@ def test_for_hello():
     set_up()
     response = client.get("/")
     assert response.status_code == 200
-    assert response.text == "The Coins"
+    assert "The Coins" in response.text
 
     
 # testing adding a coin

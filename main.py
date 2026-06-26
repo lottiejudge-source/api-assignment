@@ -14,11 +14,7 @@ def get_hello():
     data = """<?xml version="1.0"?>
     <Header>
         The Coins 
-    </Header>
-    <Body>
-        ... and the duties
-    </Body>
-    """
+    </Header> """
     return Response(content=data, media_type="application/xml")
 
 # decorator
