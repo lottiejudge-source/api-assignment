@@ -104,3 +104,4 @@ def test_for_get_coin_by_id():
     response = client.get(f"/coins/{mock_coin.coin_id}")
     assert response.status_code == 200
     
+    db.close()
