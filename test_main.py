@@ -6,6 +6,8 @@ client=TestClient(app)
 
 def setup_module():
     init_db()
+    db.connect(reuse_if_open=True)
+    
 # wrapping the test set up in a function so I can call it at the top of the test suite for it to run everytime, otherwise I get the following error - failed: server closed the connection unexpectedly 
 def set_up():
     db.connect(reuse_if_open=True)
