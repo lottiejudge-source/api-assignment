@@ -1,6 +1,7 @@
 from database import db, init_db, Coins, Duties, JoinCoinsAndDuties
 from schemas import CoinCreate
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.templating import Jinja2Templates
 from uuid import UUID
 
 app = FastAPI()
@@ -11,10 +12,12 @@ def startup():
 
 @app.get("/")
 def get_hello():
-    data = """<?xml version="1.0"?>
-    <Header>
+    data = """<!DOCTYPE html>
+    <html>
+    <h1>
         The Coins 
-    </Header> """
+    </h1> 
+    </html>"""
     return Response(content=data, media_type="application/xml")
 
 # decorator
@@ -104,24 +107,4 @@ def delete_coin(coin_id: UUID):
     db.close()
     return {"message": "coin deleted successfully"}
 
-@app.get("/coins/{coin_id}")
-def get_coin_by_id(coin_id: UUID):
-    db.connect(reuse_if_open=True)
-    coin = Coins.get(Coins.coin_id == coin_id)
 
-    joins = JoinCoinsAndDuties.select().where(JoinCoinsAndDuties.coin == coin)
-        
-    duties_for_coin = [
-            {
-            "duty_id": join.duty.duty_id,
-            "duty_name": join.duty.duty_name,
-            "duty_description": join.duty.duty_description
-            } for join in joins
-        ]
-    db.close()
-    return {
-            "coin_id": coin.coin_id,
-            "coin_name": coin.coin_name,
-            "coin_complete": coin.coin_complete,
-            "duties": duties_for_coin
-    }
