@@ -16,6 +16,13 @@ def set_up():
     Duties.delete().execute()
     db.close()
 
+def test_for_hello():
+    set_up()
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.text == "The Coins"
+
+    
 # testing adding a coin
 def test_for_coin():
     # calling test set up here 

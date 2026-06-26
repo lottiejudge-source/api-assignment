@@ -1,7 +1,6 @@
 from database import db, init_db, Coins, Duties, JoinCoinsAndDuties
 from schemas import CoinCreate
-from typing import List
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Response
 from uuid import UUID
 
 app = FastAPI()
@@ -10,6 +9,17 @@ app = FastAPI()
 def startup():
     init_db()
 
+@app.get("/")
+def get_hello():
+    data = """<?xml version="1.0"?>
+    <Header>
+        The Coins 
+    </Header>
+    <Body>
+        ... and the duties
+    </Body>
+    """
+    return Response(content=data, media_type="application/xml")
 
 # decorator
 @app.get("/coins")
