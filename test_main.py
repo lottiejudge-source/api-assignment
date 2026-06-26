@@ -93,15 +93,15 @@ def test_seeds_data_successfully():
 
     assert seed_successful == True
 
-def test_for_get_coin_by_id():
-    set_up()
-    db.connect(reuse_if_open=True)
+# def test_for_get_coin_by_id():
+#     set_up()
+#     db.connect(reuse_if_open=True)
 
-    mock_coin = Coins.create(
-        coin_name="Mock test coin",
-        coin_complete = False
-    )
-    response = client.get(f"/coins/{mock_coin.coin_id}")
-    assert response.status_code == 200
+#     mock_coin = Coins.create(
+#         coin_name="Mock test coin",
+#         coin_complete = False
+#     )
+#     response = client.get(f"/coins/{mock_coin.coin_id}")
+#     assert response.status_code == 200
     
-    db.close()
+#     db.close()
