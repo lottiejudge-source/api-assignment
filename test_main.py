@@ -4,7 +4,7 @@ from database import db, Coins, Duties, JoinCoinsAndDuties, init_db
 from seed import seed_data
 client=TestClient(app)
 
-def initialise_db():
+def setup_module():
     init_db()
 # wrapping the test set up in a function so I can call it at the top of the test suite for it to run everytime, otherwise I get the following error - failed: server closed the connection unexpectedly 
 def set_up():
