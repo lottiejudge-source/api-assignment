@@ -56,7 +56,7 @@ def test_for_adding_coins():
 
 def test_for_no_duplicate_coins():
     test_coin = {
-          "coin_name": "Assemble",
+        "coin_name": "Assemble",
         "coin_complete": False,
         "duty_ids": []
     }
@@ -92,3 +92,15 @@ def test_seeds_data_successfully():
         print(f"seed failed wither error: {error}")
 
     assert seed_successful == True
+
+def test_for_get_coin_by_id():
+    set_up()
+    db.connect(reuse_if_open=True)
+
+    mock_coin = Coins.create(
+        coin_name="Mock test coin",
+        coin_complete = False
+    )
+    response = client.get(f"/coins/{mock_coin.coin_id}")
+    assert response.status_code == 200
+    
