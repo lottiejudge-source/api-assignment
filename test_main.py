@@ -4,13 +4,18 @@ from database import db, Coins, Duties, JoinCoinsAndDuties
 from seed import seed_data
 client=TestClient(app)
 
-db.connect(reuse_if_open=True)
-JoinCoinsAndDuties.delete().execute()
-Coins.delete().execute()
-Duties.delete().execute()
-db.close()
+# wrapping the test set up in a function so I can call it at the top of the test suite for it to run everytime, otherwise I get the following error - failed: server closed the connection unexpectedly 
+def test_set_up():
+    db.connect(reuse_if_open=True)
+    JoinCoinsAndDuties.delete().execute()
+    Coins.delete().execute()
+    Duties.delete().execute()
+    db.close()
+
 # testing adding a coin
 def test_for_coin():
+    # calling test set up here 
+    test_set_up()
     response = client.get("/coins")
     assert response.status_code == 200
     coins = response.json()
