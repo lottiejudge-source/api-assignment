@@ -1,4 +1,4 @@
-name: Run tests and check coverage 
+name: Endgame pipeline deploy and test
 
 on:
   push: 
@@ -20,8 +20,18 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install dependencies
+        run: |
+            pip install -r requirements.txt
+            pip install pytest pytest-cov httpx
+
       - name: Run tests with pytest and ensure 80% coverage 
+        env: 
+          DB_NAME: ${{ secrets.TEST_DB_NAME }}
+          DB_HOST: ${{ secrets.TEST_DB_HOST }}
+          DB_USER: ${{ secrets.TEST_DB_USER }}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}  
         run: | 
           pytest --cov=. --cov-fail-under=80 
 
-      
+        
