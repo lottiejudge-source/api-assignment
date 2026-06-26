@@ -1,6 +1,7 @@
 from database import db, init_db, Coins, Duties, JoinCoinsAndDuties
 from schemas import CoinCreate
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.templating import Jinja2Templates
 from uuid import UUID
 
 app = FastAPI()
@@ -11,10 +12,12 @@ def startup():
 
 @app.get("/")
 def get_hello():
-    data = """<?xml version="1.0"?>
-    <Header>
+    data = """<!DOCTYPE html>
+    <html>
+    <h1>
         The Coins 
-    </Header> """
+    </h1> 
+    </html>"""
     return Response(content=data, media_type="application/xml")
 
 # decorator
