@@ -1,11 +1,13 @@
 from fastapi.testclient import TestClient
 from main import app
-from database import db, Coins, Duties, JoinCoinsAndDuties
+from database import db, Coins, Duties, JoinCoinsAndDuties, init_db
 from seed import seed_data
 client=TestClient(app)
 
+def initialise_db():
+    init_db()
 # wrapping the test set up in a function so I can call it at the top of the test suite for it to run everytime, otherwise I get the following error - failed: server closed the connection unexpectedly 
-def test_set_up():
+def set_up():
     db.connect(reuse_if_open=True)
     JoinCoinsAndDuties.delete().execute()
     Coins.delete().execute()
@@ -15,7 +17,7 @@ def test_set_up():
 # testing adding a coin
 def test_for_coin():
     # calling test set up here 
-    test_set_up()
+    set_up()
     response = client.get("/coins")
     assert response.status_code == 200
     coins = response.json()
@@ -23,6 +25,7 @@ def test_for_coin():
     
 
 def test_for_adding_coins():
+    set_up()
     db.connect(reuse_if_open=True)
     test_duty = Duties.create(
         duty_name="Duty 8",
@@ -55,6 +58,7 @@ def test_for_no_duplicate_coins():
 
 
 def test_for_updating_coin():
+    set_up()
     db.connect(reuse_if_open=True)
     coin = Coins.create(coin_name="Assemble", coin_complete=False)
     db.close()
@@ -70,6 +74,7 @@ def test_for_updating_coin():
     assert response.status_code == 200
 
 def test_seeds_data_successfully():
+    set_up()
     try:
         seed_data()
         seed_successful = True
