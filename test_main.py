@@ -6,7 +6,6 @@ client=TestClient(app)
 
 def setup_module():
     init_db()
-    db.connect(reuse_if_open=True)
     
 # wrapping the test set up in a function so I can call it at the top of the test suite for it to run everytime, otherwise I get the following error - failed: server closed the connection unexpectedly 
 def set_up():
@@ -35,13 +34,11 @@ def test_for_coin():
 
 def test_for_adding_coins():
     set_up()
-    db.connect(reuse_if_open=True)
     test_duty = Duties.create(
         duty_name="Duty 8",
         duty_description="Evolve and define architecture, utilising the knowledge and experience of the team to design in an optimal user experience, scalability, security, high availability and optimal performance."
         )
     
-    db.close()
 
     coin_to_add = {
         "coin_name": "Assemble",
@@ -68,9 +65,7 @@ def test_for_no_duplicate_coins():
 
 def test_for_updating_coin():
     set_up()
-    db.connect(reuse_if_open=True)
     coin = Coins.create(coin_name="Assemble", coin_complete=False)
-    db.close()
 
     update_coin = {
         "coin_name": "General Assemble",
@@ -92,16 +87,3 @@ def test_seeds_data_successfully():
         print(f"seed failed wither error: {error}")
 
     assert seed_successful == True
-
-# def test_for_get_coin_by_id():
-#     set_up()
-#     db.connect(reuse_if_open=True)
-
-#     mock_coin = Coins.create(
-#         coin_name="Mock test coin",
-#         coin_complete = False
-#     )
-#     response = client.get(f"/coins/{mock_coin.coin_id}")
-#     assert response.status_code == 200
-    
-#     db.close()
