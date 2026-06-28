@@ -1,4 +1,4 @@
-name: Endgame pipeline deploy and test
+name: Run tests and check coverage 
 
 on:
   push: 
@@ -22,9 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-            pip install -r requirements.txt
-            pip install pytest pytest-cov httpx
+          pip install -r requirements.txt
+          pip install pytest pytest-cov    
+
+      - name: Run tests with pytest and ensure 80% coverage 
+        run: | 
+          pytest --cov=. --cov-fail-under=80 
+
       
-      - name: Run test suite
-        run: |
-          pytest
