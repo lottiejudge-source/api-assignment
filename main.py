@@ -90,7 +90,7 @@ def update_coin(coin_id: UUID, payload: CoinCreate):
         JoinCoinsAndDuties.create(coin = coin, duty =duty_id )
 
     db.close()
-    return {"message": "coin update successfully"}
+    return {"message": "coin updated successfully"}
 
 # decorator > method
 @app.delete("/coins/{coin_id}")
