@@ -1,38 +1,50 @@
-name: Run tests and check coverage 
+name: Run tests and check coverage
 
 on:
-  push: 
+  push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
 
-
-jobs: 
+jobs:
   test:
     runs-on: ubuntu-latest
 
-    steps: 
-      - name: Check out repo code 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: mock_db
+          POSTGRES_USER: mock_user
+          POSTGRES_PASSWORD: mock_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U mock_user -d mock_db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Check out repo code
         uses: actions/checkout@v4
-      
-      - name: Set up python
+
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest pytest-cov    
+          pip install pytest pytest-cov
 
-      - name: Run tests with pytest and ensure 80% coverage 
-        env: 
+      - name: Run tests
+        env:
           DB_NAME: mock_db
           DB_HOST: localhost
           DB_USER: mock_user
           DB_PASSWORD: mock_password
           DB_PORT: "5432"
-        run: | 
-          pytest --cov=. --cov-fail-under=80 
-
-      
+        run: |
+          pytest --cov=. --cov-fail-under=80
