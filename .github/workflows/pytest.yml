@@ -26,6 +26,12 @@ jobs:
           pip install pytest pytest-cov    
 
       - name: Run tests with pytest and ensure 80% coverage 
+        env: 
+          DB_NAME: mock_db
+          DB_HOST: localhost
+          DB_USER: mock_user
+          DB_PASSWORD: mock_password
+          DB_PORT: "5432"
         run: | 
           pytest --cov=. --cov-fail-under=80 
 

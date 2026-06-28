@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from main import app
 from peewee import SqliteDatabase
-from database import db, Coins, Duties, JoinCoinsAndDuties
+from database import db, Coins, Duties, JoinCoinsAndDuties, init_db
 from seed import seed_data
 
 test_db = SqliteDatabase(':memory:')
@@ -11,8 +11,7 @@ client=TestClient(app)
 
 
 def setup_module():
-    with db:
-        db.create_tables([Coins, Duties, JoinCoinsAndDuties], safe=True)
+    init_db()
     
 # wrapping the test set up in a function so I can call it at the top of the test suite for it to run everytime, otherwise I get the following error - failed: server closed the connection unexpectedly 
 def set_up():
@@ -48,7 +47,7 @@ def test_for_adding_coins():
         
 
     coin_to_add = {
-        "coin_name": "Test Coin",
+        "coin_name": "Assemble",
         "coin_complete": False,
         "duty_ids": [str(test_duty.duty_id)]
     }
@@ -77,12 +76,12 @@ def test_for_updating_coin():
         coin_id = coin.coin_id
 
     update_coin = {
-        "coin_name": "General Assemble",
-        "coin_complete": True,
-        "duty_ids": []
+            "coin_name": "General Assemble",
+            "coin_complete": True,
+            "duty_ids": []
         }
 
-    response = client.put(f"/coins/{coin_id}", json=update_coin)
+    response = client.put(f"/coins/{coin.coin_id}", json=update_coin)
 
     assert response.status_code == 200
 
