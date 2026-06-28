@@ -18,7 +18,7 @@ def get_hello():
         The Coins 
     </h1> 
     </html>"""
-    return Response(content=data, media_type="application/html")
+    return Response(content=data, media_type="text/html")
 
 # decorator
 @app.get("/coins")
