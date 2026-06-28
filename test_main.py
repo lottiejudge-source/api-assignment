@@ -16,9 +16,7 @@ def setup_module():
 # wrapping the test set up in a function so I can call it at the top of the test suite for it to run everytime, otherwise I get the following error - failed: server closed the connection unexpectedly 
 def set_up():
     with db:
-        JoinCoinsAndDuties.delete().execute()
-        Coins.delete().execute()
-        Duties.delete().execute()
+        db.create_tables([Coins, Duties, JoinCoinsAndDuties], safe=True)
 
 def test_for_hello():
     set_up()
@@ -47,7 +45,7 @@ def test_for_adding_coins():
         
 
     coin_to_add = {
-        "coin_name": "Assemble",
+        "coin_name": "Test Coin",
         "coin_complete": False,
         "duty_ids": [str(test_duty.duty_id)]
     }
@@ -79,7 +77,7 @@ def test_for_updating_coin():
         "coin_name": "General Assemble",
         "coin_complete": True,
         "duty_ids": []
-    }
+        }
 
     response = client.put(f"/coins/{coin_id}", json=update_coin)
 
