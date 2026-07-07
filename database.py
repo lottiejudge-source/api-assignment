@@ -27,6 +27,13 @@ class JoinCoinsAndDuties(BaseModel):
     coin = ForeignKeyField(Coins)
     duty = ForeignKeyField(Duties)
 
+class Users(BaseModel):
+    user_id = UUIDField(primary_key=True, default=uuid4)
+    user_name = TextField(unique=True)
+    user_password = TextField()
+    role = TextField()
+
+
 def init_db():
     real_db = PostgresqlDatabase(
         os.getenv("DB_NAME"),
@@ -38,4 +45,4 @@ def init_db():
 
     with db:
         db.execute_sql("CREATE SCHEMA IF NOT EXISTS coins;")
-        db.create_tables([Coins, Duties, JoinCoinsAndDuties], safe=True)
+        db.create_tables([Coins, Duties, JoinCoinsAndDuties, Users], safe=True)

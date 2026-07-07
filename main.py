@@ -3,8 +3,23 @@ from schemas import CoinCreate
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.templating import Jinja2Templates
 from uuid import UUID
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173",  
+    "http://localhost:3000",  
+    "ADD FRONT END HERE "
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin for origin in origins if origin],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 def startup():
@@ -107,26 +122,6 @@ def delete_coin(coin_id: UUID):
     db.close()
     return {"message": "coin deleted successfully"}
 
-
-@app.put("/coins/{coin_id}")
-def update_coin(coin_id: UUID, payload: CoinCreate):
-    db.connect(reuse_if_open=True)
-
-    coin = Coins.get(Coins.coin_id == coin_id)
-
-    coin.coin_name = payload.coin_name
-    coin.coin_complete = payload.coin_complete
-    coin.save()
-
-    remove_duties = JoinCoinsAndDuties.delete().where(JoinCoinsAndDuties.coin == coin)
-    remove_duties.execute()
-
-    for duty_id in payload.duty_ids: 
-        JoinCoinsAndDuties.create(coin = coin, duty =duty_id )
-
-    db.close()
-    return {"message": "coin updated successfully"}
-
 @app.get("/coins/{coin_id}")
 def get_coin_by_id(coin_id: UUID):
     db.connect(reuse_if_open=True)
@@ -148,3 +143,5 @@ def get_coin_by_id(coin_id: UUID):
             "coin_complete": coin.coin_complete,
             "duties": duties_for_coin
     }
+
+# @app.get("/users")

@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from main import app
 from peewee import SqliteDatabase
-from database import db, Coins, Duties, JoinCoinsAndDuties, init_db
+from database import db, Coins, Duties, JoinCoinsAndDuties, Users, init_db
 from seed import seed_data
 
 test_db = SqliteDatabase(':memory:')
@@ -90,3 +90,17 @@ def test_seeds_data_successfully():
     with db:
         assert Coins.select().count() > 0
         assert Duties.select().count() > 0
+
+def test_create_user():
+    with db: 
+        new_user = Users.create(
+            user_name = "Test User",
+            user_password = "hashed_very_secure_password",
+            role = "admin"
+        )
+
+        added_user = Users.get(Users.user_name == "Test User")
+
+        assert added_user.user_name == "Test User"
+        assert added_user.role == "admin"
+
