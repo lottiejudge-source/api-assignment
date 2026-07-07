@@ -27,6 +27,11 @@ class JoinCoinsAndDuties(BaseModel):
     coin = ForeignKeyField(Coins)
     duty = ForeignKeyField(Duties)
 
+class Users(BaseModel):
+    user_id = UUIDField(primary_key=True, default=uuid4)
+    user_name = TextField()
+    
+
 def init_db():
     real_db = PostgresqlDatabase(
         os.getenv("DB_NAME"),

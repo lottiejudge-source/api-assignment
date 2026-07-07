@@ -90,3 +90,17 @@ def test_seeds_data_successfully():
     with db:
         assert Coins.select().count() > 0
         assert Duties.select().count() > 0
+
+def test_create_user():
+    with db: 
+        new_user = Users.create(
+            username = "Test User",
+            password = "hashed_very_secure_password",
+            role = "admin"
+        )
+
+        added_user = Users.get(Users.username == "Test User")
+
+        assert added_user.username == "Test User"
+        assert added_user.role == "admin"
+
