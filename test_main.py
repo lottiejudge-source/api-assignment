@@ -101,9 +101,9 @@ def test_create_user():
             role = "admin"
         )
 
-        added_user = Users.get(Users.user_name == "Test User")
+        added_user = Users.get(Users.user_name == unique_name)
 
-        assert added_user.user_name == "Test User"
+        assert added_user.user_name == unique_name
         assert added_user.role == "admin"
 
 def test_create_HTTP_log():
