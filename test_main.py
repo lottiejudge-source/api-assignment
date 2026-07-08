@@ -1,8 +1,9 @@
 import pytest
+import uuid
 from fastapi.testclient import TestClient
 from main import app
 from peewee import SqliteDatabase
-from database import db, Coins, Duties, JoinCoinsAndDuties, Users, init_db
+from database import db, Coins, Duties, JoinCoinsAndDuties, Users, AuditLog, init_db
 from seed import seed_data
 
 test_db = SqliteDatabase(':memory:')
@@ -92,9 +93,10 @@ def test_seeds_data_successfully():
         assert Duties.select().count() > 0
 
 def test_create_user():
+    unique_name = f"Test User {uuid.uuid4().hex[:6]}"
     with db: 
         new_user = Users.create(
-            user_name = "Test User",
+            user_name = unique_name,
             user_password = "hashed_very_secure_password",
             role = "admin"
         )
@@ -104,3 +106,17 @@ def test_create_user():
         assert added_user.user_name == "Test User"
         assert added_user.role == "admin"
 
+def test_create_HTTP_log():
+    with db: 
+        AuditLog.delete().execute()
+
+    response = client.get("/")
+    assert response.status_code == 200
+
+    with db:
+        latest_log = AuditLog.select().order_by(AuditLog.timestamp.desc()).first()
+
+        assert latest_log is not None 
+        assert latest_log.method == "GET"
+        assert latest_log.path == "/"
+        assert latest_log.status_code == 200 
