@@ -1,6 +1,6 @@
-from database import db, init_db, Coins, Duties, JoinCoinsAndDuties
+from database import db, init_db, Coins, Duties, JoinCoinsAndDuties, AuditLog
 from schemas import CoinCreate
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.templating import Jinja2Templates
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 origins = [
+    # TODO: add these to env
     "http://localhost:5173",  
     "http://localhost:3000",  
     "ADD FRONT END HERE "
@@ -24,6 +25,21 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     init_db()
+
+@app.middleware("http")
+async def audit_logger(request: Request, call_next):
+    response = await call_next(request)
+    db.connect(reuse_if_open = True)
+    try: 
+        AuditLog.create(
+            method = request.method,
+            path = request.url.path,
+            status_code = response.status_code
+        )
+    finally: 
+        db.close()
+    return response
+
 
 @app.get("/")
 def get_hello():

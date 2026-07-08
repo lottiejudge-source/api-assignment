@@ -33,7 +33,13 @@ class Users(BaseModel):
     user_password = TextField()
     role = TextField()
 
-
+class AuditLog(BaseModel):
+    log_id = UUIDField(primary_key=True, default=uuid4)
+    method = TextField()
+    path = TextField()
+    status_code = IntegerField()
+    timestamp = DateTimeField(constraints =[SQL("DEFAULT CURRENT_TIMESTAMP")])
+    
 def init_db():
     real_db = PostgresqlDatabase(
         os.getenv("DB_NAME"),
@@ -45,4 +51,4 @@ def init_db():
 
     with db:
         db.execute_sql("CREATE SCHEMA IF NOT EXISTS coins;")
-        db.create_tables([Coins, Duties, JoinCoinsAndDuties, Users], safe=True)
+        db.create_tables([Coins, Duties, JoinCoinsAndDuties, Users, AuditLog], safe=True)
