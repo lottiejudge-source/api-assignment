@@ -1,4 +1,5 @@
 from database import db, init_db, Coins, Duties, JoinCoinsAndDuties, AuditLog
+import os
 from schemas import CoinCreate
 from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.templating import Jinja2Templates
@@ -8,10 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 origins = [
-    # TODO: add these to env
-    "http://localhost:5173",  
-    "http://localhost:3000",  
-    "ADD FRONT END HERE "
+    os.getenv("ORIGIN_LOCAL_ONE"),  
+    os.getenv("ORIGIN_LOCAL_TWO"),
+    os.getenv("ADD FRONT END HERE")
     ]
 
 app.add_middleware(
