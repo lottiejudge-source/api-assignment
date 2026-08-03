@@ -65,6 +65,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         if (response.ok) {
             localStorage.setItem('access_token', data.access_token);
             localStorage.setItem('role', data.role);
+            // adding cookies so the app knows I'm logged in
+            document.cookie = `user=${data.user_name || user_name}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `role=${data.role}; path=/; max-age=86400; SameSite=Lax`;
             window.location.href = '/';
         } else {
             alertBox.textContent = data.detail || 'Invalid username or password.';

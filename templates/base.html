@@ -11,14 +11,16 @@
         <ul>
             <li><strong>🪙 The Coins</strong></li>
         </ul>
-        <ul>
-            <li><a href="/">Dashboard</a></li>
+        <li><a href="/">Dashboard</a></li>
             {% if user %}
-                <li><a href="/logout" role="button" class="secondary outline">Logout</a></li>
+                {% if role == 'admin' %}
+                    <li><a href="/admin/logs" role="button" class="contrast outline">Audit Logs</a></li>
+                {% endif %}
+                <li><a href="/logout" onclick="localStorage.clear();" role="button" class="secondary outline">Logout</a></li>
             {% else %}
+                <li><a href="/register" role="button" class="outline">Register</a></li>
                 <li><a href="/login" role="button">Login</a></li>
             {% endif %}
-        </ul>
     </nav>
     
     <main class="container">
