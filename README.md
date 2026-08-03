@@ -1,12 +1,8 @@
 Running this app: 
 python -m fastapi dev main.py
 
-Back end Testing: 
+Testing: 
 pytest --cov=.
-
-Front end testing: 
-cd frontend/src/test
-npm test
 
 URL: https://api-assignment-lj9.vercel.app/
 
