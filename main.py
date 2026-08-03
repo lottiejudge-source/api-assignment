@@ -5,8 +5,10 @@ from fastapi import Depends, FastAPI, HTTPException, Header, Response, Request
 from fastapi.templating import Jinja2Templates
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-key-change-in-prod")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
@@ -71,15 +73,19 @@ async def audit_logger(request: Request, call_next):
     return response
 
 
-@app.get("/")
-def get_hello():
-    data = """<!DOCTYPE html>
-    <html>
-    <h1>
-        The Coins 
-    </h1> 
-    </html>"""
-    return Response(content=data, media_type="text/html")
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    coins = list(Coins.select())
+    user = request.cookies.get("user") 
+    return templates.TemplateResponse(
+        request=request, 
+        name="index.html", 
+        context={
+            "title": "Lottie's Coins", 
+            "coins": coins, 
+            "user": user
+        }
+    )
 
 # decorator
 @app.get("/coins")
