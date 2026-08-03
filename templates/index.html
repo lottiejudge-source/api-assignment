@@ -28,7 +28,6 @@
         <tbody>
             {% for coin in coins %}
             <tr>
-                <!-- Fallback to standard Peewee field names if coin_id isn't custom -->
                 <td>{{ coin.id if coin.id is defined else coin.coin_id }}</td>
                 <td>{{ coin.name if coin.name is defined else coin.coin_name }}</td>
                 <td>
