@@ -1,3 +1,5 @@
+from starlette.responses import RedirectResponse
+
 from database import db, init_db, AuditLog, Coins, Duties, JoinCoinsAndDuties, Users 
 import bcrypt, datetime, jwt, os
 from schemas import CoinCompleteUpdate, CoinCreate, UserCreate, UserLogin
@@ -83,17 +85,24 @@ async def audit_logger(request: Request, call_next):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    coins = list(Coins.select())
-    user = request.cookies.get("user") 
-    return templates.TemplateResponse(
-        request=request, 
-        name="index.html", 
-        context={
-            "title": "Lottie's Coins", 
-            "coins": coins, 
-            "user": user
-        }
-    )
+    db.connect(reuse_if_open=True)
+    try:
+        coins = list(Coins.select())
+        user = request.cookies.get("user")  # Reads the cookie set by JS
+        role = request.cookies.get("role")
+        
+        return templates.TemplateResponse(
+            request=request, 
+            name="index.html", 
+            context={
+                "title": "Lottie's Coins", 
+                "coins": coins, 
+                "user": user,
+                "role": role
+            }
+        )
+    finally:
+        db.close()
 
 # decorator
 @app.get("/coins")
@@ -305,3 +314,12 @@ async def get_register_page(request: Request):
 @app.get("/login", response_class=HTMLResponse)
 async def get_login_page(request: Request):
     return templates.TemplateResponse(request=request, name="login.html", context={})
+
+# adding log out for saftey 
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/")
+    response.delete_cookie("user")
+    response.delete_cookie("role")
+    return response
