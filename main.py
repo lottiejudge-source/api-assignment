@@ -1,18 +1,22 @@
-from database import db, init_db, Coins, Duties, JoinCoinsAndDuties, AuditLog
-import os
-from schemas import CoinCreate
-from fastapi import FastAPI, HTTPException, Response, Request
+from database import db, init_db, AuditLog, Coins, Duties, JoinCoinsAndDuties, Users 
+import bcrypt, datetime, jwt, os
+from schemas import CoinCreate, UserCreate, UserLogin
+from fastapi import Depends, FastAPI, HTTPException, Header, Response, Request
 from fastapi.templating import Jinja2Templates
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-key-change-in-prod")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+
 origins = [
     os.getenv("ORIGIN_LOCAL_ONE"),  
     os.getenv("ORIGIN_LOCAL_TWO"),
     os.getenv("ADD FRONT END HERE")
     ]
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,6 +25,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# adding in a least responsibility route for security here 
+def get_current_user(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorisation header")
+
+    token = authorization.split(" ")[1]
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+def require_role(allowed_roles: list):
+    """Role-based Access Control (RBAC) Dependency Factory."""
+    def role_checker(current_user: dict = Depends(get_current_user)):
+        if current_user.get("role") not in allowed_roles:
+            raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges")
+        return current_user
+    return role_checker
+
+require_admin = require_role(["admin"])
+require_authenticated = require_role(["authorised", "admin"])
+
 
 @app.on_event("startup")
 def startup():
@@ -81,30 +111,27 @@ def get_coins():
     db.close()
     return coins_as_list
 
-@app.post("/coins", status_code=201)
+@app.post("/coins", status_code=201, dependencies=[Depends(require_admin)])
 def create_coin(payload: CoinCreate):
     db.connect(reuse_if_open=True)
+    try:
+        duplication_check = Coins.select().where(Coins.coin_name == payload.coin_name).exists()
+        if duplication_check:
+            raise HTTPException(status_code=400, detail="Coin name already exists")
+        
+        new_coin = Coins.create(
+            coin_name=payload.coin_name, 
+            coin_complete=payload.coin_complete
+        )
 
-# validation demonstraton 
-    duplication_check = Coins.select().where(Coins.coin_name == payload.coin_name).exists()
-    if duplication_check == True:
+        for duty_id in payload.duty_ids:
+            JoinCoinsAndDuties.create(coin=new_coin, duty=duty_id)
+
+        return {"message": "Coin created successfully", "coin_id": new_coin.coin_id, "coin_name": new_coin.coin_name}
+    finally:
         db.close()
-        raise HTTPException(status_code=400, detail="Coin name already exists")
-    
-    new_coin = Coins.create(
-        coin_name = payload.coin_name, 
-        coin_complete = payload.coin_complete
-    )
 
-    for duty_id in payload.duty_ids:
-        duty = Duties.get(Duties.duty_id == duty_id)
-
-        JoinCoinsAndDuties.create(coin=new_coin, duty=duty_id)
-
-    db.close()
-    return{"message": "Coin ceated successfully", "coin_id": new_coin.coin_id, "coin_name": new_coin.coin_name}
-
-@app.put("/coins/{coin_id}")
+@app.put("/coins/{coin_id}", dependencies=[Depends(require_admin)])
 def update_coin(coin_id: UUID, payload: CoinCreate):
     db.connect(reuse_if_open=True)
 
@@ -124,7 +151,7 @@ def update_coin(coin_id: UUID, payload: CoinCreate):
     return {"message": "coin updated successfully"}
 
 # decorator > method
-@app.delete("/coins/{coin_id}")
+@app.delete("/coins/{coin_id}", dependencies=[Depends(require_admin)])
 def delete_coin(coin_id: UUID):
     db.connect(reuse_if_open=True)
 
@@ -160,4 +187,86 @@ def get_coin_by_id(coin_id: UUID):
             "duties": duties_for_coin
     }
 
-# @app.get("/users")
+# logging in etc 
+@app.post("/auth/register", status_code =201)
+def register_user(payload: UserCreate):
+    db.connect(reuse_if_open =True)
+    try: 
+        # dupe check - pen testing 
+        if Users.select().where(Users.user_name == payload.user_name).exists():
+            raise HTTPException(status_code=400, detail="Username already exists")
+        password_bytes = payload.user_password.encode('utf-8')
+        # 12 is industry standard to encryopt the password
+        salt = bcrypt.gensalt(rounds=12) 
+        hashed_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+        new_user = Users.create(
+            user_name=payload.user_name,
+            user_password=hashed_password,
+            role=payload.role
+        )
+
+        return {
+            "message": "User registered successfully",
+            "user_id": new_user.user_id
+        }
+    finally:
+        db.close()
+
+
+# user logging in 
+@app.post("/auth/login")
+def login_user(payload: UserLogin):
+    user_name = payload.user_name
+    user_password = payload.user_password
+
+    if not user_name or not user_password:
+        raise HTTPException(status_code=400, detail="Username and password are required")
+
+    db.connect(reuse_if_open=True)
+    try:
+        try:
+            user = Users.get(Users.user_name == user_name)
+        except Users.DoesNotExist:
+            raise HTTPException(status_code=401, detail="Invalid username or password")
+
+        password_bytes = user_password.encode('utf-8')
+        hashed_bytes = user.user_password.encode('utf-8')
+
+        if not bcrypt.checkpw(password_bytes, hashed_bytes):
+            raise HTTPException(status_code=401, detail="Invalid username or password")
+
+        token_payload = {
+            "user_id": str(user.user_id),
+            "user_name": user.user_name,
+            "role": user.role,
+            "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
+        }
+
+        token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "role": user.role
+        }
+    finally:
+        db.close()
+
+# admin logs route
+@app.get("/admin/logs", dependencies=[Depends(require_admin)])
+def get_admin_logs():
+    db.connect(reuse_if_open=True)
+    try:
+        logs = AuditLog.select().order_by(AuditLog.timestamp.desc()).limit(100)
+        return [
+            {
+                "id": log.id,
+                "method": log.method,
+                "path": log.path,
+                "status_code": log.status_code,
+                "timestamp": log.timestamp
+            }
+            for log in logs
+        ]
+    finally:
+        db.close()
