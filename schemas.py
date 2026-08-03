@@ -15,3 +15,6 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     user_name: str = Field(..., pattern=r"^[a-zA-Z0-9_]+$")
     user_password: str = Field(..., min_length=8)
+
+class CoinCompleteUpdate(BaseModel):
+    coin_complete: bool

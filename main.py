@@ -1,13 +1,21 @@
 from database import db, init_db, AuditLog, Coins, Duties, JoinCoinsAndDuties, Users 
 import bcrypt, datetime, jwt, os
-from schemas import CoinCreate, UserCreate, UserLogin
+from schemas import CoinCompleteUpdate, CoinCreate, UserCreate, UserLogin
 from fastapi import Depends, FastAPI, HTTPException, Header, Response, Request
 from fastapi.templating import Jinja2Templates
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 templates = Jinja2Templates(directory="templates")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "super-secret-key-change-in-prod")
@@ -134,6 +142,19 @@ def create_coin(payload: CoinCreate):
             JoinCoinsAndDuties.create(coin=new_coin, duty=duty_id)
 
         return {"message": "Coin created successfully", "coin_id": new_coin.coin_id, "coin_name": new_coin.coin_name}
+    finally:
+        db.close()
+        
+@app.patch("/coins/{coin_id}/complete", dependencies=[Depends(require_authenticated)])
+def toggle_coin_completion(coin_id: UUID, payload: CoinCompleteUpdate):
+    db.connect(reuse_if_open=True)
+    try:
+        coin = Coins.get(Coins.coin_id == coin_id)
+        coin.coin_complete = payload.coin_complete
+        coin.save()
+        return {"message": "Coin status updated successfully", "coin_id": coin.coin_id, "coin_complete": coin.coin_complete}
+    except Coins.DoesNotExist:
+        raise HTTPException(status_code=404, detail="Coin not found")
     finally:
         db.close()
 
@@ -276,3 +297,11 @@ def get_admin_logs():
         ]
     finally:
         db.close()
+
+@app.get("/register", response_class=HTMLResponse)
+async def get_register_page(request: Request):
+    return templates.TemplateResponse(request=request, name="register.html", context={})
+
+@app.get("/login", response_class=HTMLResponse)
+async def get_login_page(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html", context={})
