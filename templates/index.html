@@ -1,10 +1,53 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>FastAPI Template</title>
-    </head>
-    <body>
-        <h1>Hello, {{ name }}!</h1>
-        <p>Welcome to your FastAPI-rendered HTML page.</p>
-    </body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Coins Overview</h2>
+    {% if not user %}
+        <a href="/login" role="button">Login to Manage</a>
+    {% else %}
+        <span>Welcome, <strong>{{ user }}</strong>!</span>
+        <a href="/logout" role="button" class="secondary">Logout</a>
+    {% endif %}
+</div>
+
+{% if coins %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Coin Name</th>
+            <th>Status</th>
+            {% if user %}
+            <th>Actions</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for coin in coins %}
+        <tr>
+            <td>{{ coin.coin_id }}</td>
+            <td>{{ coin.coin_name }}</td>
+            <td>
+                {% if coin.coin_complete %}
+                    <mark style="background-color: #2e7d32; color: white;">Completed</mark>
+                {% else %}
+                    <mark style="background-color: #d32f2f; color: white;">Pending</mark>
+                {% endif %}
+            </td>
+            {% if user %}
+            <td>
+                <!-- Toggle switch / button for authenticated users -->
+                <form action="/coins/{{ coin.coin_id }}/toggle" method="POST" style="margin: 0;">
+                    <button type="submit" class="outline style-sm">Toggle Status</button>
+                </form>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No coins found in the database.</p>
+{% endif %}
+{% endblock %}
