@@ -13,9 +13,14 @@
         </ul>
         <ul>
             <li><a href="/">Dashboard</a></li>
-            <li><a href="/login" role="button">Login</a></li>
+            {% if user %}
+                <li><a href="/logout" role="button" class="secondary outline">Logout</a></li>
+            {% else %}
+                <li><a href="/login" role="button">Login</a></li>
+            {% endif %}
         </ul>
     </nav>
+    
     <main class="container">
         {% block content %}{% endblock %}
     </main>
