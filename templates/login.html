@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Coin Tracker{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">Login</h2>
+
+    {% if error %}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+        <span class="block sm:inline">{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form action="/login" method="POST" class="space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div>
+            <label for="user_name" class="block text-sm font-medium text-gray-700">Username</label>
+            <input type="text" id="user_name" name="user_name" required 
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
+        </div>
+
+        <div>
+            <label for="user_password" class="block text-sm font-medium text-gray-700">Password</label>
+            <input type="password" id="user_password" name="user_password" required 
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
+        </div>
+
+        <button type="submit" 
+                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">
+            Sign In
+        </button>
+    </form>
+</div>
+{% endblock %}
