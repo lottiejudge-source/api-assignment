@@ -1,122 +1,39 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import Coins from '../Coins';
+import { AuthContext } from '../../context/AuthContext';
 
-function App() {
-  const [count, setCount] = useState(0)
+vi.mock('../../api/axios', () => ({
+  default: {
+    get: vi.fn(() => Promise.resolve({ 
+      data: [{ coin_id: '123e4567-e89b-12d3-a456-426614174000', coin_name: 'Front End Coin', coin_complete: false }] 
+    })),
+  },
+}));
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+const renderWithAuth = (ui, user) => {
+  return render(
+    <AuthContext.Provider value={{ user, logout: vi.fn() }}>
+      {ui}
+    </AuthContext.Provider>
+  );
+};
 
-      <div className="ticks"></div>
+describe('Coins Page (TDD)', () => {
+  it('renders coin list with completion status but hides admin controls for standard users', async () => {
+    const standardUser = { user_id: '1', user_name: 'alex', role: 'user' };
+    renderWithAuth(<Coins />, standardUser);
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+    expect(await screen.findByText('Supervision Duty Coin')).toBeInTheDocument();
+    expect(screen.getByText(/Pending/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Add New Coin/i)).not.toBeInTheDocument();
+  });
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+  it('renders admin controls for admin users', async () => {
+    const adminUser = { user_id: '2', user_name: 'admin', role: 'admin' };
+    renderWithAuth(<Coins />, adminUser);
 
-export default App
+    expect(await screen.findByText('Supervision Duty Coin')).toBeInTheDocument();
+    expect(screen.getByText(/Add New Coin/i)).toBeInTheDocument();
+  });
+});
