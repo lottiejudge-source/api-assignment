@@ -106,6 +106,28 @@ def test_create_user():
         assert added_user.user_name == unique_name
         assert added_user.role == "admin"
 
+def test_register_user():
+    with db: 
+        Users.delete().where(Users.user_name == "Lottie Test").execute()
+
+    payload = {
+        "user_name": "Lottie Test",
+        "user_password": "not12345!",
+        "role": "authorised"
+    }
+
+    response = client.post("/auth/register", json=payload)
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["message"] == "User registered successfully"
+    assert "user_id" in data
+
+    with db:
+        saved_user = Users.get(Users.user_name == "Lottie Test")
+        assert saved_user.user_password != "not12345!"
+
+
 def test_create_HTTP_log():
     with db: 
         AuditLog.delete().execute()

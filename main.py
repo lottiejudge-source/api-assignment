@@ -1,6 +1,7 @@
-from database import db, init_db, Coins, Duties, JoinCoinsAndDuties, AuditLog
+from database import db, init_db, AuditLog, Coins, Duties, JoinCoinsAndDuties, Users 
+import bcrypt
 import os
-from schemas import CoinCreate
+from schemas import CoinCreate, UserCreate
 from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.templating import Jinja2Templates
 from uuid import UUID
@@ -160,4 +161,26 @@ def get_coin_by_id(coin_id: UUID):
             "duties": duties_for_coin
     }
 
-# @app.get("/users")
+@app.post("/auth/register", status_code =201)
+def register_user(payload: UserCreate):
+    db.connect(reuse_if_open =True)
+    try: 
+        # dupe check - pen testing 
+        if Users.select().where(Users.user_name == payload.user_name).exists():
+            raise HTTPException(status_code=400, detail="Username already exists")
+        password_bytes = payload.user_password.encode('utf-8')
+        # 12 is industry standard to encryopt the password
+        salt = bcrypt.gensalt(rounds=12) 
+        hashed_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+        new_user = Users.create(
+            user_name=payload.user_name,
+            user_password=hashed_password,
+            role=payload.role
+        )
+
+        return {
+            "message": "User registered successfully",
+            "user_id": new_user.user_id
+        }
+    finally:
+        db.close()
