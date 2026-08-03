@@ -12,3 +12,8 @@ I first tried using xml to return a responce at route / - but I wasn't completel
 https://fastapi.tiangolo.com/advanced/response-directly/#returning-a-custom-response
 
 Schema
+
+Security bits: 
+password hashing 
+non specific messaging when incorrect username/password
+added slowapi for rate limiting 
