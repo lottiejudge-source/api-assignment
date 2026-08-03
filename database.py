@@ -10,6 +10,7 @@ db = Proxy()
 class BaseModel(Model):
     class Meta:
         database = db
+        schema = 'coins' if os.getenv("DB_TYPE", "").lower() == "postgres" and os.getenv("DB_HOST") else None
 
 class Coins(BaseModel):
     coin_id = UUIDField(primary_key=True, default=uuid4)
@@ -65,4 +66,5 @@ def init_db():
         db.initialize(real_db)
 
         with db:
+            db.execute_sql("CREATE SCHEMA IF NOT EXISTS coins;")
             db.create_tables([Coins, Duties, JoinCoinsAndDuties, Users, AuditLog], safe=True)
