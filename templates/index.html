@@ -1,53 +1,58 @@
 {% extends "base.html" %}
-{% block title %}{{ title }}{% endblock %}
+
+{% block title %}{{ title }} - Dashboard{% endblock %}
+
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <h2>Coins Overview</h2>
-    {% if not user %}
-        <a href="/login" role="button">Login to Manage</a>
+    {% if user %}
+        <p>Welcome back, <strong>{{ user }}</strong>!</p>
     {% else %}
-        <span>Welcome, <strong>{{ user }}</strong>!</span>
-        <a href="/logout" role="button" class="secondary">Logout</a>
+        <a href="/login" role="button" class="contrast">Login to Manage</a>
     {% endif %}
-</div>
+</header>
 
 {% if coins %}
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Coin Name</th>
-            <th>Status</th>
-            {% if user %}
-            <th>Actions</th>
-            {% endif %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for coin in coins %}
-        <tr>
-            <td>{{ coin.coin_id }}</td>
-            <td>{{ coin.coin_name }}</td>
-            <td>
-                {% if coin.coin_complete %}
-                    <mark style="background-color: #2e7d32; color: white;">Completed</mark>
-                {% else %}
-                    <mark style="background-color: #d32f2f; color: white;">Pending</mark>
+<figure>
+    <table role="grid">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Coin Name</th>
+                <th scope="col">Status</th>
+                {% if user %}
+                <th scope="col">Actions</th>
                 {% endif %}
-            </td>
-            {% if user %}
-            <td>
-                <!-- Toggle switch / button for authenticated users -->
-                <form action="/coins/{{ coin.coin_id }}/toggle" method="POST" style="margin: 0;">
-                    <button type="submit" class="outline style-sm">Toggle Status</button>
-                </form>
-            </td>
-            {% endif %}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            </tr>
+        </thead>
+        <tbody>
+            {% for coin in coins %}
+            <tr>
+                <!-- Fallback to standard Peewee field names if coin_id isn't custom -->
+                <td>{{ coin.id if coin.id is defined else coin.coin_id }}</td>
+                <td>{{ coin.name if coin.name is defined else coin.coin_name }}</td>
+                <td>
+                    {% if coin.is_complete or coin.coin_complete %}
+                        <ins style="color: var(--pico-ins-color, green); font-weight: bold;">Completed</ins>
+                    {% else %}
+                        <del style="color: var(--pico-del-color, red); font-weight: bold;">Pending</del>
+                    {% endif %}
+                </td>
+                {% if user %}
+                <td>
+                    <form action="/coins/{{ coin.id if coin.id is defined else coin.coin_id }}/toggle" method="POST" style="margin: 0;">
+                        <button type="submit" class="outline style-sm" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;">Toggle Status</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</figure>
 {% else %}
-<p>No coins found in the database.</p>
+<article>
+    <p>No coins found in the database.</p>
+</article>
 {% endif %}
 {% endblock %}
