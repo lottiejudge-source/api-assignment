@@ -10,7 +10,6 @@ db = Proxy()
 class BaseModel(Model):
     class Meta:
         database = db
-        schema = "coins"
 
 class Coins(BaseModel):
     coin_id = UUIDField(primary_key=True, default=uuid4)
