@@ -15,20 +15,33 @@
     <form action="/login" method="POST" class="space-y-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
+        <!-- adding in autocomplete cos it encourages users to use password managers/strong passwords  -->
+         <!-- maxlength to stop overflow and memory exhaustion attempts -->     
         <div>
             <label for="user_name" class="block text-sm font-medium text-gray-700">Username</label>
-            <input type="text" id="user_name" name="user_name" required 
+            <input type="text" 
+                   id="user_name" 
+                   name="user_name" 
+                   required 
+                   autofocus
+                   autocomplete="username"
+                   maxlength="50"
                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
         </div>
 
         <div>
             <label for="user_password" class="block text-sm font-medium text-gray-700">Password</label>
-            <input type="password" id="user_password" name="user_password" required 
+            <input type="password" 
+                   id="user_password" 
+                   name="user_password" 
+                   required 
+                   autocomplete="current-password"
+                   maxlength="128"
                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2">
         </div>
 
         <button type="submit" 
-                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">
+                class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition font-medium">
             Sign In
         </button>
     </form>
