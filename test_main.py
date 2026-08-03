@@ -1,10 +1,13 @@
+import datetime
+
 import pytest
 import uuid
 from fastapi.testclient import TestClient
-from main import app
+from main import JWT_ALGORITHM, JWT_SECRET, app
 from peewee import SqliteDatabase
 from database import db, Coins, Duties, JoinCoinsAndDuties, Users, AuditLog, init_db
 from seed import seed_data
+import jwt
 
 test_db = SqliteDatabase(':memory:')
 
@@ -18,6 +21,16 @@ def set_up():
         Duties.delete().execute()
   
 client=TestClient(app)
+def get_admin_headers():
+    """Generates a valid JWT bearer header for admin endpoints."""
+    token_payload = {
+        "user_id": "test-admin-id",
+        "user_name": "admin_tester",
+        "role": "admin",
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+    }
+    token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return {"Authorization": f"Bearer {token}"}
 
 def test_for_root():   
     response = client.get("/")
@@ -46,7 +59,7 @@ def test_for_adding_coins():
         "duty_ids": [str(test_duty.duty_id)]
     }
 
-    response = client.post("/coins", json=coin_to_add )
+    response = client.post("/coins", json=coin_to_add, headers=get_admin_headers())
     assert response.status_code == 201
 
     data = response.json()
@@ -62,7 +75,7 @@ def test_for_no_duplicate_coins():
         "duty_ids": []
     }
 
-    response = client.post("/coins", json=test_coin )
+    response = client.post("/coins", json=test_coin, headers=get_admin_headers())
     assert response.status_code == 400
 
     data = response.json()
@@ -80,7 +93,7 @@ def test_for_updating_coin():
             "duty_ids": []
         }
 
-    response = client.put(f"/coins/{coin_id}", json=update_coin)
+    response = client.put(f"/coins/{coin_id}", json=update_coin, headers=get_admin_headers())
     assert response.status_code == 200
 
     data = response.json()
@@ -108,10 +121,10 @@ def test_create_user():
 
 def test_register_user():
     with db: 
-        Users.delete().where(Users.user_name == "Lottie Test").execute()
+        Users.delete().where(Users.user_name == "lottie_test").execute()
 
     payload = {
-        "user_name": "Lottie Test",
+        "user_name": "lottie_test",
         "user_password": "not12345!",
         "role": "authorised"
     }
@@ -124,7 +137,7 @@ def test_register_user():
     assert "user_id" in data
 
     with db:
-        saved_user = Users.get(Users.user_name == "Lottie Test")
+        saved_user = Users.get(Users.user_name == "lottie_test")
         assert saved_user.user_password != "not12345!"
 
 
@@ -142,3 +155,39 @@ def test_create_HTTP_log():
         assert latest_log.method == "GET"
         assert latest_log.path == "/"
         assert latest_log.status_code == 200 
+
+# ensureing the login sends a JSON web token - safe way to pass info between user and server (loogin in basically)
+def test_login_user_success():
+    with db:
+        Users.delete().where(Users.user_name == "login_tester").execute()
+
+    client.post("/auth/register", json={    
+        "user_name": "login_tester",
+        "user_password": "SecurePassword123!",
+        "role": "admin"
+    })
+
+    login_payload = {
+        "user_name": "login_tester",
+        "user_password": "SecurePassword123!"
+    }
+    response = client.post("/auth/login", json=login_payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+
+    decoded = jwt.decode(data["access_token"], options={"verify_signature": False})
+    assert decoded["user_name"] == "login_tester"
+    assert decoded["role"] == "admin"
+
+def test_login_user_invalid_credentials():
+    login_payload = {
+        "user_name": "login_tester",
+        "user_password": "WrongPassword123!"
+    }
+    response = client.post("/auth/login", json=login_payload)
+    assert response.status_code == 401
+    # not telling users which is incorrect - safer code
+    assert response.json()["detail"] == "Invalid username or password"

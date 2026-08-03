@@ -8,6 +8,10 @@ class CoinCreate(BaseModel):
     duty_ids: List[UUID]
 
 class UserCreate(BaseModel):
-    user_name: str = Field(..., pattern=r"^[a-zA-Z0-9_]+$"),
-    user_password: str = Field(..., min_length = 8), 
+    user_name: str = Field(..., pattern=r"^[a-zA-Z0-9_]+$")
+    user_password: str = Field(..., min_length = 8)
     role: str = Field(..., pattern="^(authorised|admin)+$")
+
+class UserLogin(BaseModel):
+    user_name: str = Field(..., pattern=r"^[a-zA-Z0-9_]+$")
+    user_password: str = Field(..., min_length=8)
