@@ -1,12 +1,16 @@
 from database import db, Duties, Coins, JoinCoinsAndDuties, Users
 
 def seed_data():
+    if db.obj is None:
+        init_db()
+
     db.connect(reuse_if_open=True)
     db.create_tables([Coins, Duties, JoinCoinsAndDuties, Users], safe=True)
-    
-    JoinCoinsAndDuties.delete().execute()
-    Duties.delete().execute()
-    Coins.delete().execute()
+
+    with db.atomic():
+        JoinCoinsAndDuties.delete().execute()
+        Duties.delete().execute()
+        Coins.delete().execute()
     
 
 
@@ -56,6 +60,6 @@ def seed_data():
     db.close()        
 
 if __name__ == "__main__":
-    from peewee import SqliteDatabase
-    db.initialize(SqliteDatabase("coins.db"))
+    from database import init_db
+    init_db()
     seed_data()
