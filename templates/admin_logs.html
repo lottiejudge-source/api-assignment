@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs - Coin Tracker{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <div class="flex items-center gap-2">
+                <a href="/" class="text-xs text-indigo-600 hover:underline font-medium">&larr; Back to Dashboard</a>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mt-1">System Audit Logs</h1>
+            <p class="text-xs text-gray-500">HTTP traffic and access history</p>
+        </div>
+        
+        <a href="/admin/logs" class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-md text-xs font-semibold transition">
+            Refresh Logs
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    <th class="py-3 px-4">Method</th>
+                    <th class="py-3 px-4">Path</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-sm font-mono">
+                {% for log in logs %}
+                <tr class="hover:bg-gray-50/50 transition">
+                    <td class="py-2.5 px-4">
+                        {% if log.method == 'GET' %}
+                        <span class="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded">GET</span>
+                        {% elif log.method == 'POST' %}
+                        <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">POST</span>
+                        {% elif log.method == 'PATCH' or log.method == 'PUT' %}
+                        <span class="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded">{{ log.method }}</span>
+                        {% elif log.method == 'DELETE' %}
+                        <span class="bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold px-2 py-0.5 rounded">DELETE</span>
+                        {% else %}
+                        <span class="bg-gray-50 text-gray-700 border border-gray-200 text-[10px] font-bold px-2 py-0.5 rounded">{{ log.method }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-2.5 px-4 text-gray-800 font-medium">
+                        {{ log.path }}
+                    </td>
+                    <td class="py-2.5 px-4">
+                        {% if log.status_code >= 200 and log.status_code < 300 %}
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                            {{ log.status_code }} OK
+                        </span>
+                        {% elif log.status_code >= 300 and log.status_code < 400 %}
+                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                            {{ log.status_code }}
+                        </span>
+                        {% elif log.status_code >= 400 and log.status_code < 500 %}
+                        <span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                            {{ log.status_code }} Error
+                        </span>
+                        {% else %}
+                        <span class="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                            {{ log.status_code }} Server Error
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="py-2.5 px-4 text-right text-xs text-gray-500 font-sans">
+                        {{ log.timestamp }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center py-8 text-gray-400 text-sm font-sans">
+                        No audit logs recorded yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
