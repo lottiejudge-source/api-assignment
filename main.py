@@ -92,6 +92,9 @@ async def read_root(request: Request):
     db.connect(reuse_if_open=True)
     try:
         coins = list(Coins.select())
+        for coin in coins:
+            joins = JoinCoinsAndDuties.select().where(JoinCoinsAndDuties.coin == coin)
+            coin.duties = [join.duty for join in joins]
         user = request.cookies.get("user")  # Reads the cookie set by JS
         role = request.cookies.get("role")
         
