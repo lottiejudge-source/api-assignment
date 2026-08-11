@@ -312,7 +312,7 @@ def get_admin_logs():
                 "timestamp": log.timestamp
             }
             for log in logs
-        ]
+        ]   
     finally:
         db.close()
 
@@ -320,8 +320,9 @@ def get_admin_logs():
 async def view_admin_logs_page(request: Request):
     role = request.cookies.get("role")
     user = request.cookies.get("user")
+    token = request.cookies.get("access_token")
 
-    if role != "admin":
+    if not token or role != "admin":
         raise HTTPException(status_code=403, detail="Forbidden: Admin access required")
 
     db.connect(reuse_if_open=True)
