@@ -1,9 +1,9 @@
+from httpx2 import request
 from starlette.responses import RedirectResponse
-
 from database import db, init_db, AuditLog, Coins, Duties, JoinCoinsAndDuties, Users 
 import bcrypt, datetime, jwt, os
 from schemas import CoinCompleteUpdate, CoinCreate, UserCreate, UserLogin
-from fastapi import Depends, FastAPI, HTTPException, Header, Response, Request
+from fastapi import Depends, FastAPI, HTTPException, Header, Response, Request, Form
 from fastapi.templating import Jinja2Templates
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,11 +39,15 @@ app.add_middleware(
 )
 
 # adding in a least responsibility route for security here 
-def get_current_user(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorisation header")
+def get_current_user(request: Request, authorization: str = Header(None)):
+    token = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+    elif "access_token" in request.cookies:
+        token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing authentication token")
 
-    token = authorization.split(" ")[1]
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         return payload
@@ -154,14 +158,16 @@ def create_coin(payload: CoinCreate):
     finally:
         db.close()
         
-@app.patch("/coins/{coin_id}/complete", dependencies=[Depends(require_authenticated)])
-def toggle_coin_completion(coin_id: UUID, payload: CoinCompleteUpdate):
+@app.post("/coins/{coin_id}/toggle")
+async def toggle_coin_status(coin_id: UUID):
     db.connect(reuse_if_open=True)
     try:
         coin = Coins.get(Coins.coin_id == coin_id)
-        coin.coin_complete = payload.coin_complete
+        coin.coin_complete = not coin.coin_complete  # 👈 Flips True to False, or False to True
         coin.save()
-        return {"message": "Coin status updated successfully", "coin_id": coin.coin_id, "coin_complete": coin.coin_complete}
+        
+        # Redirect back to the index page so Jinja re-renders the updated coin list
+        return RedirectResponse(url="/", status_code=303)
     except Coins.DoesNotExist:
         raise HTTPException(status_code=404, detail="Coin not found")
     finally:

@@ -1,55 +1,60 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }} - Dashboard{% endblock %}
+{% block title %}Dashboard - Coin Tracker{% endblock %}
 
 {% block content %}
-<header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <h2>Coins Overview</h2>
-    {% if user %}
-        <p>Welcome back, <strong>{{ user }}</strong>!</p>
-    {% endif %}
-</header>
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Coin Tracker</h1>
+        
+        {% if role == 'admin' %}
+        <a href="/admin/logs" class="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700">
+            View Audit Logs
+        </a>
+        {% endif %}
+    </div>
 
-{% if coins %}
-<figure>
-    <table role="grid">
-        <thead>
-            <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Coin Name</th>
-                <th scope="col">Status</th>
-                {% if user %}
-                <th scope="col">Actions</th>
-                {% endif %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for coin in coins %}
-            <tr>
-                <td>{{ coin.id if coin.id is defined else coin.coin_id }}</td>
-                <td>{{ coin.name if coin.name is defined else coin.coin_name }}</td>
-                <td>
-                    {% if coin.is_complete or coin.coin_complete %}
-                        <ins style="color: var(--pico-ins-color, green); font-weight: bold;">Completed</ins>
+    <!-- Coins & Duties List -->
+    <div class="space-y-4">
+        {% for coin in coins %}
+        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between">
+            <div class="space-y-1">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ coin.coin_name }}</h3>
+                    
+                    <!-- Status Badge -->
+                    {% if coin.coin_complete %}
+                    <span class="bg-green-100 text-green-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Completed</span>
                     {% else %}
-                        <del style="color: var(--pico-del-color, red); font-weight: bold;">Pending</del>
+                    <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium">In Progress</span>
                     {% endif %}
-                </td>
-                {% if user %}
-                <td>
-                    <form action="/coins/{{ coin.id if coin.id is defined else coin.coin_id }}/toggle" method="POST" style="margin: 0;">
-                        <button type="submit" class="outline style-sm" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;">Toggle Status</button>
-                    </form>
-                </td>
+                </div>
+
+                <!-- Display Duties associated with Coin -->
+                {% if coin.duties %}
+                <div class="mt-2 text-xs text-gray-600 space-y-1">
+                    <p class="font-medium text-gray-500">Associated Duties:</p>
+                    <ul class="list-disc list-inside">
+                        {% for join in coin.duties %}
+                        <li><strong>{{ join.duty.duty_name }}:</strong> {{ join.duty.duty_description }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
                 {% endif %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</figure>
-{% else %}
-<article>
-    <p>No coins found in the database.</p>
-</article>
-{% endif %}
+            </div>
+            {% if user %}
+            <form action="/coins/{{ coin.coin_id }}/toggle" method="POST">
+                <button type="submit" 
+                        class="text-xs px-3 py-2 rounded-md font-medium transition 
+                               {% if coin.coin_complete %}bg-gray-200 text-gray-700 hover:bg-gray-300{% else %}bg-green-600 text-white hover:bg-green-700{% endif %}">
+                    {% if coin.coin_complete %}Mark Incomplete{% else %}Mark Complete{% endif %}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No coins found in the database.</p>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
