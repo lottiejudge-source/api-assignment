@@ -297,7 +297,7 @@ def login_user(payload: UserLogin):
     finally:
         db.close()
 
-# admin logs route
+# admin logs routes
 @app.get("/admin/logs", dependencies=[Depends(require_admin)])
 def get_admin_logs():
     db.connect(reuse_if_open=True)
@@ -313,6 +313,30 @@ def get_admin_logs():
             }
             for log in logs
         ]
+    finally:
+        db.close()
+
+@app.get("/admin/logs", response_class=HTMLResponse)
+async def view_admin_logs_page(request: Request):
+    role = request.cookies.get("role")
+    user = request.cookies.get("user")
+
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Forbidden: Admin access required")
+
+    db.connect(reuse_if_open=True)
+    try:
+        logs = list(AuditLog.select().order_by(AuditLog.timestamp.desc()).limit(100))
+        return templates.TemplateResponse(
+            request=request,
+            name="admin_logs.html",
+            context={
+                "title": "Audit Logs - Admin",
+                "logs": logs,
+                "user": user,
+                "role": role
+            }
+        )
     finally:
         db.close()
 
