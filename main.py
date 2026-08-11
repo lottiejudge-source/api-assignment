@@ -260,7 +260,7 @@ def register_user(payload: UserCreate):
 
 # user logging in 
 @app.post("/auth/login")
-def login_user(payload: UserLogin):
+def login_user(payload: UserLogin, response: Response):
     user_name = payload.user_name
     user_password = payload.user_password
 
@@ -288,6 +288,17 @@ def login_user(payload: UserLogin):
         }
 
         token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True, 
+            samesite="lax",
+            secure=True
+        )
+
+        response.set_cooke(key="user", value=user.user_name, httponly=False, samesite="lax")
+        response.set_cookie(key="role", value=user.role, httponly=False, samesite="lax")
 
         return {
             "access_token": token,
