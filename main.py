@@ -297,7 +297,7 @@ def login_user(payload: UserLogin, response: Response):
             secure=True
         )
 
-        response.set_cooke(key="user", value=user.user_name, httponly=False, samesite="lax")
+        response.set_cookie(key="user", value=user.user_name, httponly=False, samesite="lax")
         response.set_cookie(key="role", value=user.role, httponly=False, samesite="lax")
 
         return {
