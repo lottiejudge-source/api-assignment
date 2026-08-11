@@ -3,57 +3,61 @@
 {% block title %}Dashboard - Coin Tracker{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Coin Tracker</h1>
+<div class="max-w-4xl mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Coin Tracker</h1>
+            <p class="text-sm text-gray-500">Track and update your security & engineering coins</p>
+        </div>
         
         {% if role == 'admin' %}
-        <a href="/admin/logs" class="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700">
-            View Audit Logs
+        <a href="/admin/logs" class="bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+            <span>🛡️</span> Monitoring Logs
         </a>
         {% endif %}
     </div>
-
-    <!-- Coins & Duties List -->
-    <div class="space-y-4">
+<!-- le coins -->
+    <div class="space-y-3">
         {% for coin in coins %}
-        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between">
-            <div class="space-y-1">
-                <div class="flex items-center gap-3">
-                    <h3 class="text-lg font-semibold text-gray-900">{{ coin.coin_name }}</h3>
-                    
-                    <!-- Status Badge -->
-                    {% if coin.coin_complete %}
-                    <span class="bg-green-100 text-green-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Completed</span>
-                    {% else %}
-                    <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium">In Progress</span>
-                    {% endif %}
-                </div>
-
-                <!-- Display Duties associated with Coin -->
+        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 flex-wrap flex-1 min-w-0">
+                <span class="font-semibold text-gray-800 text-sm tracking-wide">{{ coin.coin_name }}</span>
                 {% if coin.duties %}
-                <div class="mt-2 text-xs text-gray-600 space-y-1">
-                    <p class="font-medium text-gray-500">Associated Duties:</p>
-                    <ul class="list-disc list-inside">
-                        {% for join in coin.duties %}
-                        <li><strong>{{ join.duty.duty_name }}:</strong> {{ join.duty.duty_description }}</li>
-                        {% endfor %}
-                    </ul>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    {% for join in coin.duties %}
+                    <span title="{{ join.duty.duty_description }}" 
+                          class="cursor-help bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[11px] font-medium px-2 py-0.5 rounded-md border border-slate-200 transition">
+                        {{ join.duty.duty_name }}
+                    </span>
+                    {% endfor %}
                 </div>
                 {% endif %}
             </div>
+            <!-- togglin -->
             {% if user %}
-            <form action="/coins/{{ coin.coin_id }}/toggle" method="POST">
-                <button type="submit" 
-                        class="text-xs px-3 py-2 rounded-md font-medium transition 
-                               {% if coin.coin_complete %}bg-gray-200 text-gray-700 hover:bg-gray-300{% else %}bg-green-600 text-white hover:bg-green-700{% endif %}">
-                    {% if coin.coin_complete %}Mark Incomplete{% else %}Mark Complete{% endif %}
-                </button>
+            <form action="/coins/{{ coin.coin_id }}/toggle" method="POST" class="shrink-0 flex items-center">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" 
+                           name="coin_complete" 
+                           onchange="this.form.submit()" 
+                           class="sr-only peer" 
+                           {% if coin.coin_complete %}checked{% endif %}>
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
             </form>
+            {% else %}
+                {% if coin.coin_complete %}
+                <span class="text-xs bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-full border border-emerald-200">Done</span>
+                {% else %}
+                <span class="text-xs bg-gray-100 text-gray-500 font-medium px-2.5 py-1 rounded-full">Pending</span>
+                {% endif %}
             {% endif %}
+
         </div>
         {% else %}
-        <p class="text-gray-500 text-center py-8">No coins found in the database.</p>
+        <div class="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+            <p class="text-gray-400 text-sm">No coins found in database.</p>
+        </div>
         {% endfor %}
     </div>
 </div>
