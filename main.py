@@ -45,7 +45,7 @@ def get_current_user(request: Request, authorization: str = Header(None)):
         token = authorization.split(" ")[1]
     elif "access_token" in request.cookies:
         token = request.cookies.get("access_token")
-    if not token:
+    if not token:   
         raise HTTPException(status_code=401, detail="Missing authentication token")
 
     try:
@@ -309,7 +309,7 @@ def login_user(payload: UserLogin, response: Response):
         db.close()
 
 # admin logs routes
-@app.get("/admin/logs", dependencies=[Depends(require_admin)])
+@app.get("api/admin/logs", dependencies=[Depends(require_admin)])
 def get_admin_logs():
     db.connect(reuse_if_open=True)
     try:
@@ -359,12 +359,47 @@ async def get_register_page(request: Request):
 @app.get("/login", response_class=HTMLResponse)
 async def get_login_page(request: Request):
     return templates.TemplateResponse(request=request, name="login.html", context={})
+# the post log in dedicated form hadnler 
+
+@app.post("/login")
+async def handle_form_login(
+    request: Request,
+    user_name: str = Form(...),
+    user_password: str = Form(...)
+):
+    db.connect(reuse_if_open=True)
+    try:
+        user = Users.select().where(Users.user_name == user_name).first()
+        if not user or not bcrypt.checkpw(user_password.encode('utf-8'), user.user_password.encode('utf-8')):
+            return templates.TemplateResponse(
+                request=request,
+                name="login.html",
+                context={"error": "Invalid username or password"}
+            )
+
+        token_payload = {
+            "user_id": str(user.user_id),
+            "user_name": user.user_name,
+            "role": user.role,
+            "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
+        }
+        token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+        response = RedirectResponse(url="/", status_code=303)
+        response.set_cookie(key="access_token", value=token, httponly=True, samesite="lax", secure=True)
+        response.set_cookie(key="user", value=user.user_name, httponly=False, samesite="lax")
+        response.set_cookie(key="role", value=user.role, httponly=False, samesite="lax")
+        return response
+    finally:
+        db.close()
+
 
 # adding log out for saftey 
 
 @app.get("/logout")
 async def logout():
     response = RedirectResponse(url="/")
+    response.delete_cookie("access_token")
     response.delete_cookie("user")
     response.delete_cookie("role")
     return response
