@@ -1,5 +1,4 @@
 import datetime
-
 import pytest
 import uuid
 from fastapi.testclient import TestClient
@@ -157,6 +156,7 @@ def test_create_HTTP_log():
         assert latest_log.status_code == 200 
 
 # ensureing the login sends a JSON web token - safe way to pass info between user and server (loogin in basically)
+
 def test_login_user_success():
     with db:
         Users.delete().where(Users.user_name == "login_tester").execute()
@@ -191,3 +191,4 @@ def test_login_user_invalid_credentials():
     assert response.status_code == 401
     # not telling users which is incorrect - safer code
     assert response.json()["detail"] == "Invalid username or password"
+
