@@ -8,7 +8,6 @@ from fastapi.templating import Jinja2Templates
 from uuid import UUID
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -239,7 +238,7 @@ def register_user(payload: UserCreate):
     try: 
         # dupe check - pen testing 
         if Users.select().where(Users.user_name == payload.user_name).exists():
-            raise HTTPException(status_code=400, detail="Username already exists")
+            raise HTTPException(status_code=400, detail="Registration failed. Please check your details and try again.")
         password_bytes = payload.user_password.encode('utf-8')
         # 12 is industry standard to encryopt the password
         salt = bcrypt.gensalt(rounds=12) 
@@ -360,7 +359,6 @@ async def get_register_page(request: Request):
 async def get_login_page(request: Request):
     return templates.TemplateResponse(request=request, name="login.html", context={})
 # the post log in dedicated form hadnler 
-
 @app.post("/login")
 async def handle_form_login(
     request: Request,
@@ -393,9 +391,7 @@ async def handle_form_login(
     finally:
         db.close()
 
-
 # adding log out for saftey 
-
 @app.get("/logout")
 async def logout():
     response = RedirectResponse(url="/")
