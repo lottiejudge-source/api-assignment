@@ -4,16 +4,7 @@ python -m fastapi dev main.py
 Testing: 
 pytest --cov=.
 
-URL: https://api-assignment-lj9.vercel.app/
+URL: https://api-assignment-swart.vercel.app/
 
-Notes: 
 
-I first tried using xml to return a responce at route / - but I wasn't completely happy with this but it was fun to learn and try. I changed it to html for a cleaner look
-https://fastapi.tiangolo.com/advanced/response-directly/#returning-a-custom-response
 
-Schema
-
-Security bits: 
-password hashing 
-non specific messaging when incorrect username/password
-added slowapi for rate limiting 
