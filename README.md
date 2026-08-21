@@ -1,4 +1,5 @@
-Coin Tracker & Security Audit Application
+End Game:
+
 A full-stack FastAPI application built with Server-Side Rendering (Jinja2) and Peewee ORM for tracking security coins and apprenticeship duties. Designed and hardened against pen-testing specifications.
 
 Runnign this app: 
